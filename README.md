@@ -8,7 +8,7 @@ A collection of agent skills for automated coding workflows.
 
 | Skill | Description | Install |
 |-------|-------------|---------|
-| [code-review](code-review/) | Git diff analysis, code quality, security scan, best practices, P0-P3 priority, interactive fix. Frontend + Backend. | `npx skills add lenslp/skills --path code-review` |
+| [code-review](code-review/) | Git diff analysis, SOLID principles, code quality, security scan, dead code detection, best practices. P0-P3 priority with verdict (APPROVE/REQUEST_CHANGES/COMMENT) and interactive fix. Frontend + Backend. | `npx skills add lenslp/skills --path code-review` |
 
 ## Structure
 

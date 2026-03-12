@@ -8,7 +8,7 @@
 
 | Skill | 说明 | 安装 |
 |-------|------|------|
-| [code-review](code-review/) | Git diff 分析、代码质量、安全扫描、最佳实践、P0-P3 优先级、交互式修复。支持前后端。 | `npx skills add lenslp/skills --path code-review` |
+| [code-review](code-review/) | Git diff 分析、SOLID 原则、代码质量、安全扫描、死代码检测、最佳实践。P0-P3 优先级 + 合并建议（APPROVE/REQUEST_CHANGES/COMMENT）+ 交互式修复。支持前后端。 | `npx skills add lenslp/skills --path code-review` |
 
 ## 目录结构
 

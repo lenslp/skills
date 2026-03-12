@@ -10,8 +10,10 @@ Comprehensive code review workflow that analyzes git diffs, assesses code qualit
 ## Workflow
 
 ```
-git diff --stat → Assess scope → (>500 lines? batch by module) → Quality scan → Security scan → Best practices check → Report
+git diff → Scope → (>500 lines? batch) → SOLID → Quality → Security → Dead code → Best practices → Frontend → Report → Verdict → Confirm
 ```
+
+**Important**: This is a review-only workflow by default. Do NOT implement any code changes until the user explicitly confirms.
 
 ## Step 1: Analyze Diff Scope
 
@@ -36,16 +38,41 @@ Present a summary table:
 
 ## Step 2: Determine Review Strategy
 
+- **No changes detected**: Inform user. Ask if they want to review staged changes (`--cached`) or a specific commit range.
 - **Total changed lines (additions + deletions) > 500**: Batch by module. Group files by top-level directory, review each batch separately, then summarize cross-module concerns (breaking interfaces, circular dependencies).
 - **<= 500 lines**: Single-pass review of all changes.
+- **Mixed concerns**: Group findings by logical feature area, not just file order.
 
-## Step 3: Code Quality Scan
+## Step 3: SOLID & Architecture Scan
+
+Check all five SOLID principles and common code smells:
+
+- **SRP**: Overloaded modules with unrelated responsibilities. Ask: "What is the single reason this module would change?"
+- **OCP**: Frequent edits to switch/if blocks to add behavior instead of extension points. Ask: "Can I add a variant without touching existing code?"
+- **LSP**: Subclasses that break expectations or require type checks. Ask: "Can I substitute any subclass without the caller knowing?"
+- **ISP**: Wide interfaces with unused methods. Ask: "Do all implementers use all methods?"
+- **DIP**: High-level logic tied to concrete I/O or infrastructure. Ask: "Can I swap the implementation without changing business logic?"
+
+Also flag code smells: feature envy, data clumps, primitive obsession, shotgun surgery, speculative generality.
+
+When proposing a refactor, explain *why* it improves cohesion/coupling. For non-trivial refactors, propose an incremental plan instead of a big rewrite.
+
+For detailed prompts and heuristics, see [references/solid-checklist.md](references/solid-checklist.md).
+
+## Step 4: Code Quality Scan
 
 ### Correctness
 - Logic errors, off-by-one, missing null/undefined checks
 - Unhandled edge cases and error paths
-- Race conditions in async code
+- Race conditions in async code (concurrent access, check-then-act, TOCTOU, missing locks)
 - Resource leaks (unclosed connections, file handles, listeners)
+
+### Boundary Conditions
+- Null/undefined access without checks
+- Empty array/object not handled (e.g., `arr[0]` without length check)
+- Division by zero, integer overflow, floating point comparison
+- Truthy/falsy confusion (`if (value)` when `0` or `""` are valid)
+- Off-by-one in loops, slicing, pagination
 
 ### Readability
 - Functions > 50 lines or > 5 parameters
@@ -59,7 +86,7 @@ Present a summary table:
 - Inconsistent error handling patterns
 - Breaking public API changes without version bumps
 
-## Step 4: Security Scan
+## Step 5: Security Scan
 
 ### Critical (block merge)
 - Hardcoded secrets, API keys, tokens, passwords
@@ -86,7 +113,20 @@ Present a summary table:
 
 For detailed language-specific and frontend checks, see [references/security-checklist.md](references/security-checklist.md).
 
-## Step 5: Best Practices Check
+## Step 6: Dead Code & Removal Candidates
+
+Identify code that is unused, redundant, or feature-flagged off:
+- Unreachable code paths, never-called functions, unused exports
+- Deprecated APIs still present, old feature flag branches
+- Commented-out code blocks with no context
+
+Classify each as:
+- **Safe delete now**: No references found, no external consumers
+- **Defer with plan**: Has active consumers or needs migration
+
+For non-trivial removals, use the template in [references/removal-plan.md](references/removal-plan.md).
+
+## Step 7: Best Practices Check
 
 ### Architecture
 - Single Responsibility: each function/class/component does one thing
@@ -117,7 +157,7 @@ For detailed language-specific and frontend checks, see [references/security-che
 
 For detailed backend guidelines, see [references/best-practices.md](references/best-practices.md).
 
-## Step 5b: Frontend-Specific Scan (if changeset includes frontend code)
+## Step 7b: Frontend-Specific Scan (if changeset includes frontend code)
 
 Detect frontend code by file extensions (`.jsx`, `.tsx`, `.vue`, `.svelte`, `.css`, `.scss`, `.html`) or directory patterns (`src/components/`, `src/pages/`, `app/`). If frontend files are present, additionally check:
 
@@ -170,6 +210,7 @@ Structure the review report as:
 - **Files changed**: X
 - **Lines changed**: +Y / -Z
 - **Review mode**: Single pass / Batched by module
+- **Verdict**: ✅ APPROVE / ⚠️ REQUEST_CHANGES / 💬 COMMENT
 - **Overall risk**: 🔴 High / 🟡 Medium / 🟢 Low
 - **Issue count**: P0: N / P1: N / P2: N / P3: N
 
@@ -193,6 +234,10 @@ Structure the review report as:
 |---|-----------|--------|-------|---------------|
 | 4 | src/api/users.ts:12 | api | Variable name `d` is vague | Rename to `userData` |
 
+## Removal Candidates (if any)
+- **Safe delete**: [list items]
+- **Defer with plan**: [list items with migration notes]
+
 ## Module Reports (if batched)
 ### Module: src/auth/
 ...
@@ -203,27 +248,34 @@ Structure the review report as:
 - Migration considerations
 ```
 
-## Step 6: Interactive Fix
+### Verdict Rules
+- **APPROVE**: No P0 or P1 issues. P2/P3 only.
+- **REQUEST_CHANGES**: Any P0 or P1 issues exist.
+- **COMMENT**: No issues found, or only informational observations.
 
-After presenting the report, ask the user how to proceed. Provide these options:
+### Clean Review (no issues found)
 
-1. **Fix by priority**: "Fix all P0", "Fix P0 and P1", etc.
-2. **Fix by module**: "Fix all issues in src/auth/", etc.
-3. **Fix specific issues**: "Fix #1, #3, #5" (by issue number from the table)
-4. **Fix everything**: Apply all suggested fixes at once
-5. **Skip**: End the review without making changes
+If no issues are found, explicitly state:
+- What was checked (list the scan steps completed)
+- Areas not covered (e.g., "Did not verify database migrations" or "No test files in diff")
+- Residual risks or recommended follow-up tests
 
-Prompt format:
+## Step 8: Interactive Fix
+
+**Important**: Do NOT implement any changes until the user explicitly confirms. Present the report first and wait.
+
+After presenting the report, ask the user how to proceed:
 
 ```
-Review complete. Found N issues (P0: X, P1: Y, P2: Z, P3: W).
+Verdict: [APPROVE / REQUEST_CHANGES / COMMENT]
+Found N issues (P0: X, P1: Y, P2: Z, P3: W).
 
 How would you like to proceed?
-- By priority: e.g. "fix P0" or "fix P0 and P1"
-- By module: e.g. "fix auth module" or "fix src/api/"
-- By issue number: e.g. "fix #1, #3, #5"
-- "fix all" to apply all fixes
-- "skip" to end without changes
+1. Fix by priority: e.g. "fix P0" or "fix P0 and P1"
+2. Fix by module: e.g. "fix auth module" or "fix src/api/"
+3. Fix by issue number: e.g. "fix #1, #3, #5"
+4. "fix all" to apply all fixes
+5. "skip" to end without changes
 ```
 
 When applying fixes:

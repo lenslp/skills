@@ -2,7 +2,7 @@
 
 # Code Review
 
-Comprehensive code review skill: analyze git diff, batch review large changesets (500+ lines), scan code quality, security vulnerabilities, and best practices compliance. Issues classified by P0-P3 priority with interactive fix workflow. Supports both frontend and backend codebases.
+Comprehensive code review skill for AI agents. Analyzes git diff, checks SOLID principles, scans code quality and security, detects dead code, and verifies best practices. Issues classified by P0-P3 priority with an overall verdict (APPROVE / REQUEST_CHANGES / COMMENT). Review-only by default — no code changes until you confirm. Supports both frontend and backend.
 
 ## Installation
 
@@ -14,8 +14,10 @@ npx skills add lenslp/skills --path code-review
 
 | Category | Checks |
 |----------|--------|
-| **Code Quality** | Correctness, readability, type safety, API design |
+| **SOLID & Architecture** | SRP, OCP, LSP, ISP, DIP violations, code smells, refactor suggestions |
+| **Code Quality** | Correctness, boundary conditions, readability, type safety, API design |
 | **Security** | Injection, auth/authz, data exposure, input validation, dependency CVEs, frontend security |
+| **Dead Code** | Unused/redundant code, removal candidates with safe-delete vs defer plan |
 | **Best Practices** | Architecture, error handling, testing, performance |
 | **Frontend** | Component design, rendering performance, state management, a11y, bundle size, UX robustness |
 
@@ -27,6 +29,31 @@ npx skills add lenslp/skills --path code-review
 | **P1** | Logic errors, missing error handling, broken contracts | Fix before merge |
 | **P2** | Code quality, readability, test coverage gaps | Should fix |
 | **P3** | Style nits, naming, minor optimizations | Nice to have |
+
+## Workflow
+
+```
+git diff → Scope → SOLID → Quality → Security → Dead code → Best practices → Frontend → Report → Verdict → Confirm
+```
+
+1. **Analyze Diff** — Run `git diff --stat`, assess scope, build summary table
+2. **Batch Strategy** — Over 500 lines? Split by module, review each batch
+3. **SOLID & Architecture** — Check SRP/OCP/LSP/ISP/DIP, flag code smells
+4. **Code Quality** — Correctness, boundary conditions, readability, type safety
+5. **Security Scan** — Injection, auth, data exposure, frontend security, language-specific
+6. **Dead Code** — Identify removal candidates (safe-delete vs defer-with-plan)
+7. **Best Practices** — Architecture, error handling, testing, performance
+8. **Frontend Scan** — Component design, state, a11y, bundle size, UX (auto-detected)
+9. **Report** — All issues in P0-P3 tables with verdict
+10. **Interactive Fix** — User chooses what to fix (review-only until confirmed)
+
+## Verdict
+
+| Verdict | Condition |
+|---------|-----------|
+| ✅ **APPROVE** | No P0 or P1 issues |
+| ⚠️ **REQUEST_CHANGES** | Any P0 or P1 issues exist |
+| 💬 **COMMENT** | No issues, or informational observations only |
 
 ## Usage in Cursor
 
@@ -59,7 +86,7 @@ Check my staged code for security issues.
 
 ### After Review
 
-The report lists all issues sorted by P0-P3 priority. Choose how to fix:
+The report lists all issues sorted by P0-P3 priority with a verdict. Choose how to fix:
 
 - By priority: `fix P0`, `fix P0 and P1`
 - By module: `fix src/auth/`
@@ -72,9 +99,11 @@ The report lists all issues sorted by P0-P3 priority. Choose how to fix:
 ```
 code-review/
 ├── SKILL.md                          # Main workflow
-├── agents/agent.yaml                # UI metadata
+├── agents/agent.yaml                 # UI metadata
 └── references/
-    ├── security-checklist.md         # Detailed security checks by category & language
+    ├── solid-checklist.md            # SOLID principles, code smells, refactor heuristics
+    ├── security-checklist.md         # Security checks by category & language
     ├── best-practices.md             # Backend + frontend best practices
-    └── frontend-checklist.md         # Frontend-specific checks (50+ items)
+    ├── frontend-checklist.md         # Frontend-specific checks (50+ items)
+    └── removal-plan.md              # Dead code removal plan template
 ```
