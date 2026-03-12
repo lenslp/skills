@@ -233,6 +233,7 @@ When applying fixes:
 
 ## Notes
 
+- **Language matching**: Respond in the same language as the user's query. If the user asks in Chinese, output the entire review report in Chinese. If the user asks in English, output in English. This applies to all sections: summary, issue descriptions, suggested fixes, and interactive prompts.
 - Always read actual diff content (`git diff`) before judging, not just file names.
 - If the project has a linter config (ESLint, Prettier, Ruff, etc.), run it and include findings.
 - Prioritize P0/P1 issues over P2/P3 in both reporting and fixing.
