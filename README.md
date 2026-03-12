@@ -16,7 +16,7 @@ Each skill follows the [Anthropic skill-creator](https://github.com/anthropics/s
 skill-name/
 ├── SKILL.md              # Main instructions (required)
 ├── agents/
-│   └── openai.yaml       # UI metadata
+│   └── agent.yaml       # UI metadata
 └── references/           # Detailed reference docs loaded on demand
 ```
 
