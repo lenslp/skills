@@ -4,9 +4,9 @@ A collection of agent skills for automated coding workflows.
 
 ## Available Skills
 
-| Skill | Description |
-|-------|-------------|
-| [code-review](code-review/) | Comprehensive code review on git changes: diff analysis, batch review for large changesets (500+ lines), code quality scan, security vulnerability scan, best practices compliance, and interactive fix with P0-P3 priority system. Supports both frontend and backend codebases. |
+| Skill | Description | Install |
+|-------|-------------|---------|
+| [code-review](code-review/) | Git diff analysis, code quality, security scan, best practices, P0-P3 priority, interactive fix. Frontend + Backend. | `npx skills add lenslp/skills --path code-review` |
 
 ## Structure
 
@@ -16,14 +16,6 @@ Each skill follows the [Anthropic skill-creator](https://github.com/anthropics/s
 skill-name/
 ├── SKILL.md              # Main instructions (required)
 ├── agents/
-│   └── agent.yaml       # UI metadata
+│   └── openai.yaml       # UI metadata
 └── references/           # Detailed reference docs loaded on demand
-```
-
-## Usage
-
-Reference a skill by name when prompting:
-
-```
-Use $code-review to review my recent changes.
 ```
